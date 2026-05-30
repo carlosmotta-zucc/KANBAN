@@ -1,4 +1,4 @@
-package model;
+package painel.model;
 
 public class Ambiente {
     private String id;

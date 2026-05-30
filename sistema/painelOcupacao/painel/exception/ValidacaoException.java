@@ -1,4 +1,4 @@
-package exception;
+package painel.exception;
 
 public class ValidacaoException extends RuntimeException {
     private String campoComProblema;

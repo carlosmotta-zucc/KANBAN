@@ -1,8 +1,8 @@
-package service;
+package painel.service;
 
-import model.Ambiente;
-import model.TipoAmbiente;
-import model.Reserva;
+import painel.model.Ambiente;
+import painel.model.TipoAmbiente;
+import painel.model.Reserva;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.Duration;

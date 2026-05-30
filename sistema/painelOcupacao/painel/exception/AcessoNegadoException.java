@@ -1,4 +1,4 @@
-package exception;
+package painel.exception;
 
 public class AcessoNegadoException extends RuntimeException {
     public AcessoNegadoException(String message) {

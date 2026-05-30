@@ -1,11 +1,11 @@
-import model.Ambiente;
-import model.Reserva;
+import painel.model.Ambiente;
+import painel.model.Reserva;
 import model.Usuario;
 import model.TipoUsuario;
-import service.OcupacaoService;
+import painel.service.OcupacaoService;
 import service.AutenticacaoService;
-import exception.AcessoNegadoException;
-import exception.ValidacaoException;
+import painel.exception.AcessoNegadoException;
+import painel.exception.ValidacaoException;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
