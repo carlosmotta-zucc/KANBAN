@@ -79,10 +79,48 @@ public class ReservaService {
         return String.format("CONF-%04d", proximoProtocolo++);
     }
 
+    // --- KAN-05: cancelar reserva para liberar o ambiente ---
+    // Acesso (KAN-08): o Professor cancela suas próprias reservas; o Administrador cancela qualquer uma.
+    public Reserva cancelarReserva(Perfil perfil, String usuario, String reservaId) {
+        Reserva reserva = buscarReserva(reservaId);
+        if (reserva == null) {
+            throw new ValidacaoException("Reserva não encontrada para o ID: " + reservaId, "reserva");
+        }
+        if (!reserva.isAtiva()) {
+            throw new ValidacaoException("Esta reserva já está cancelada", "reserva");
+        }
+
+        boolean admin = perfil == Perfil.Administrador;
+        boolean donoProfessor = perfil == Perfil.Professor
+                && usuario != null && usuario.trim().equals(reserva.getProfessor());
+        if (!admin && !donoProfessor) {
+            throw new AcessoNegadoException(
+                    "Você só pode cancelar reservas que criou (ou ser administrador)");
+        }
+
+        reserva.cancelar();
+        return reserva;
+    }
+
+    public Reserva buscarReserva(String id) {
+        if (id == null) {
+            return null;
+        }
+        for (Reserva r : reservas) {
+            if (r.getId().equals(id.trim())) {
+                return r;
+            }
+        }
+        return null;
+    }
+
     // --- KAN-06: impede reservas duplicadas no mesmo laboratório/data com horários sobrepostos ---
     private void verificarChoqueDeHorario(Laboratorio laboratorio, LocalDate data,
                                           LocalTime horaInicio, LocalTime horaFim) {
         for (Reserva r : reservas) {
+            if (!r.isAtiva()) {
+                continue; // KAN-05: reserva cancelada libera o horário e não causa conflito
+            }
             boolean mesmoLaboratorio = r.getLaboratorio().getId().equals(laboratorio.getId());
             boolean mesmaData = r.getData().equals(data);
             if (mesmoLaboratorio && mesmaData

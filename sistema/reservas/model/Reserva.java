@@ -5,6 +5,9 @@ import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 
 public class Reserva {
+    public static final String STATUS_RESERVADA = "Reservada";
+    public static final String STATUS_CANCELADA = "Cancelada";
+
     private static final DateTimeFormatter FMT_DATA = DateTimeFormatter.ofPattern("dd/MM/yyyy");
     private static final DateTimeFormatter FMT_HORA = DateTimeFormatter.ofPattern("HH:mm");
 
@@ -26,7 +29,7 @@ public class Reserva {
         this.horaInicio = horaInicio;
         this.horaFim = horaFim;
         this.turma = turma;
-        this.status = "Reservada";
+        this.status = STATUS_RESERVADA;
     }
 
     public String getId() {
@@ -59,6 +62,15 @@ public class Reserva {
 
     public String getStatus() {
         return status;
+    }
+
+    public boolean isAtiva() {
+        return STATUS_RESERVADA.equals(status);
+    }
+
+    // KAN-05: cancela a reserva, liberando o ambiente (disponibilidade atualizada)
+    public void cancelar() {
+        this.status = STATUS_CANCELADA;
     }
 
     @Override
