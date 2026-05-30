@@ -1,0 +1,7 @@
+{
+    "java.project.sourcePaths": [
+        "sistema/ambientes",
+        "sistema/visualizacao",
+        "sistema/autenticacao"
+    ]
+}
