@@ -42,7 +42,8 @@ public class ReservaService {
     // --- Reservar: seleciona laboratório, data, horário e turma ---
     // KAN-04: retorna a confirmação (com protocolo) e a registra no sistema.
     public ConfirmacaoReserva reservar(Perfil perfil, String professor, String laboratorioId,
-                            String dataStr, String horaInicioStr, String horaFimStr, String turma) {
+                            String dataStr, String horaInicioStr, String horaFimStr, String turma,
+                            boolean especial) {
         verificarPermissaoProfessor(perfil);
 
         if (professor == null || professor.trim().isEmpty()) {
@@ -65,7 +66,7 @@ public class ReservaService {
         verificarChoqueDeHorario(laboratorio, data, horaInicio, horaFim);
 
         Reserva reserva = new Reserva(String.valueOf(proximoIdReserva++), laboratorio,
-                professor.trim(), data, horaInicio, horaFim, turma.trim());
+                professor.trim(), data, horaInicio, horaFim, turma.trim(), especial);
         reservas.add(reserva);
 
         // KAN-04: gera a confirmação e a registra (confirmação na tela + registro)
@@ -87,7 +88,7 @@ public class ReservaService {
             throw new ValidacaoException("Reserva não encontrada para o ID: " + reservaId, "reserva");
         }
         if (!reserva.isAtiva()) {
-            throw new ValidacaoException("Esta reserva já está cancelada", "reserva");
+            throw new ValidacaoException("Esta reserva não está ativa (status: " + reserva.getStatus() + ")", "reserva");
         }
 
         boolean admin = perfil == Perfil.Administrador;
@@ -112,6 +113,46 @@ public class ReservaService {
             }
         }
         return null;
+    }
+
+    // --- KAN-10: administrador aprova ou recusa reservas especiais pendentes ---
+    public Reserva aprovarReserva(Perfil perfil, String reservaId) {
+        Reserva reserva = validarReservaEspecialPendente(perfil, reservaId);
+        reserva.aprovar();
+        return reserva;
+    }
+
+    public Reserva recusarReserva(Perfil perfil, String reservaId) {
+        Reserva reserva = validarReservaEspecialPendente(perfil, reservaId);
+        reserva.recusar(); // libera o horário (não conta mais para conflito)
+        return reserva;
+    }
+
+    private Reserva validarReservaEspecialPendente(Perfil perfil, String reservaId) {
+        if (perfil != Perfil.Administrador) {
+            throw new AcessoNegadoException("Apenas administradores podem aprovar ou recusar reservas especiais");
+        }
+        Reserva reserva = buscarReserva(reservaId);
+        if (reserva == null) {
+            throw new ValidacaoException("Reserva não encontrada para o ID: " + reservaId, "reserva");
+        }
+        if (!reserva.isEspecial()) {
+            throw new ValidacaoException("Esta reserva não é especial e não exige aprovação", "reserva");
+        }
+        if (!reserva.isPendente()) {
+            throw new ValidacaoException("Esta reserva já foi decidida (status: " + reserva.getStatus() + ")", "reserva");
+        }
+        return reserva;
+    }
+
+    public List<Reserva> listarReservasPendentes() {
+        List<Reserva> pendentes = new ArrayList<>();
+        for (Reserva r : reservas) {
+            if (r.isPendente()) {
+                pendentes.add(r);
+            }
+        }
+        return pendentes;
     }
 
     // --- KAN-06: impede reservas duplicadas no mesmo laboratório/data com horários sobrepostos ---
