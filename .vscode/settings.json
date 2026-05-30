@@ -3,6 +3,7 @@
         "sistema/ambientes",
         "sistema/visualizacao",
         "sistema/autenticacao",
-        "sistema/reservasFuturas"
+        "sistema/reservasFuturas",
+        "sistema/painelOcupacao"
     ]
 }
