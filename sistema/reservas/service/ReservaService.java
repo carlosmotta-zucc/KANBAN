@@ -2,10 +2,12 @@ package service;
 
 import exception.AcessoNegadoException;
 import exception.ValidacaoException;
+import model.ConfirmacaoReserva;
 import model.Laboratorio;
 import model.Perfil;
 import model.Reserva;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
@@ -18,7 +20,9 @@ public class ReservaService {
 
     private List<Laboratorio> laboratorios = new ArrayList<>();
     private List<Reserva> reservas = new ArrayList<>();
+    private List<ConfirmacaoReserva> confirmacoes = new ArrayList<>();
     private int proximoIdReserva = 1;
+    private int proximoProtocolo = 1;
 
     public ReservaService() {
         // Laboratórios de exemplo (no sistema real viriam do cadastro do KAN-03)
@@ -36,7 +40,8 @@ public class ReservaService {
     }
 
     // --- Reservar: seleciona laboratório, data, horário e turma ---
-    public Reserva reservar(Perfil perfil, String professor, String laboratorioId,
+    // KAN-04: retorna a confirmação (com protocolo) e a registra no sistema.
+    public ConfirmacaoReserva reservar(Perfil perfil, String professor, String laboratorioId,
                             String dataStr, String horaInicioStr, String horaFimStr, String turma) {
         verificarPermissaoProfessor(perfil);
 
@@ -62,7 +67,16 @@ public class ReservaService {
         Reserva reserva = new Reserva(String.valueOf(proximoIdReserva++), laboratorio,
                 professor.trim(), data, horaInicio, horaFim, turma.trim());
         reservas.add(reserva);
-        return reserva;
+
+        // KAN-04: gera a confirmação e a registra (confirmação na tela + registro)
+        ConfirmacaoReserva confirmacao = new ConfirmacaoReserva(
+                gerarProtocolo(), reserva, LocalDateTime.now());
+        confirmacoes.add(confirmacao);
+        return confirmacao;
+    }
+
+    private String gerarProtocolo() {
+        return String.format("CONF-%04d", proximoProtocolo++);
     }
 
     // --- KAN-06: impede reservas duplicadas no mesmo laboratório/data com horários sobrepostos ---
@@ -154,5 +168,10 @@ public class ReservaService {
 
     public List<Reserva> listarReservas() {
         return new ArrayList<>(reservas);
+    }
+
+    // KAN-04: registro das confirmações emitidas
+    public List<ConfirmacaoReserva> listarConfirmacoes() {
+        return new ArrayList<>(confirmacoes);
     }
 }
