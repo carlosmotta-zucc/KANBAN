@@ -30,7 +30,8 @@ public class Main {
             System.out.println("4. Ver confirmações registradas (KAN-04)");
             System.out.println("5. Consultar histórico de reservas (KAN-07)");
             System.out.println("6. Cancelar reserva (KAN-05)");
-            System.out.println("7. Trocar usuário");
+            System.out.println("7. Aprovar/recusar reservas especiais (KAN-10, Administrador)");
+            System.out.println("8. Trocar usuário");
             System.out.println("0. Sair");
             System.out.print("Escolha uma opção: ");
 
@@ -57,6 +58,9 @@ public class Main {
                     cancelarReserva(reservaService, scanner);
                     break;
                 case "7":
+                    aprovarReservasEspeciais(reservaService, scanner);
+                    break;
+                case "8":
                     identificarUsuario(scanner);
                     break;
                 case "0":
@@ -128,9 +132,11 @@ public class Main {
         String horaFim = scanner.nextLine();
         System.out.print("Turma: ");
         String turma = scanner.nextLine();
+        System.out.print("Reserva especial / fora do padrão? (s/N): ");
+        boolean especial = scanner.nextLine().trim().equalsIgnoreCase("s");
 
         try {
-            ConfirmacaoReserva confirmacao = service.reservar(perfilAtual, nomeUsuario, labId, data, horaInicio, horaFim, turma);
+            ConfirmacaoReserva confirmacao = service.reservar(perfilAtual, nomeUsuario, labId, data, horaInicio, horaFim, turma, especial);
             exibirConfirmacao(confirmacao);
         } catch (Exception e) {
             tratarErro(e);
@@ -145,6 +151,10 @@ public class Main {
         System.out.println("=========================================");
         System.out.println("Protocolo: " + confirmacao.getProtocolo());
         System.out.println("Status:    " + reserva.getStatus());
+        if (reserva.isPendente()) {
+            // KAN-10: reserva especial aguarda decisão do administrador
+            System.out.println("Atenção:   reserva especial pendente de aprovação do administrador.");
+        }
         System.out.println("Reserva:   " + reserva);
         System.out.println("Guarde o protocolo como comprovante da sua reserva.\n");
     }
@@ -213,6 +223,40 @@ public class Main {
             Reserva cancelada = service.cancelarReserva(perfilAtual, nomeUsuario, id);
             System.out.println("\nReserva cancelada! O ambiente foi liberado para o horário.");
             System.out.println(cancelada + "\n");
+        } catch (Exception e) {
+            tratarErro(e);
+        }
+    }
+
+    // KAN-10: administrador decide reservas especiais (pendente -> aprovada ou recusada)
+    private static void aprovarReservasEspeciais(ReservaService service, Scanner scanner) {
+        System.out.println("--- APROVAR RESERVAS ESPECIAIS (KAN-10) ---");
+        List<Reserva> pendentes = service.listarReservasPendentes();
+        if (pendentes.isEmpty()) {
+            System.out.println("Nenhuma reserva especial pendente.\n");
+            return;
+        }
+        for (Reserva r : pendentes) {
+            System.out.println(r);
+        }
+        System.out.print("ID da reserva: ");
+        String id = scanner.nextLine();
+        System.out.print("Decisão - (A)provar ou (R)ecusar? ");
+        String decisao = scanner.nextLine().trim();
+
+        try {
+            Reserva reserva;
+            if (decisao.equalsIgnoreCase("A")) {
+                reserva = service.aprovarReserva(perfilAtual, id);
+                System.out.println("\nReserva aprovada!");
+            } else if (decisao.equalsIgnoreCase("R")) {
+                reserva = service.recusarReserva(perfilAtual, id);
+                System.out.println("\nReserva recusada! O horário foi liberado.");
+            } else {
+                System.out.println("\nDecisão inválida. Use A para aprovar ou R para recusar.\n");
+                return;
+            }
+            System.out.println(reserva + "\n");
         } catch (Exception e) {
             tratarErro(e);
         }
