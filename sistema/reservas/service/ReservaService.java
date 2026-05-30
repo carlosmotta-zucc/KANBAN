@@ -174,4 +174,54 @@ public class ReservaService {
     public List<ConfirmacaoReserva> listarConfirmacoes() {
         return new ArrayList<>(confirmacoes);
     }
+
+    // --- KAN-07: histórico de reservas com filtro por período e por ambiente ---
+    // Parâmetros vazios/nulos significam "sem filtro". O resultado vem ordenado por data/horário.
+    public List<Reserva> consultarHistorico(String laboratorioId, String dataInicioStr, String dataFimStr) {
+        Laboratorio laboratorio = null;
+        if (laboratorioId != null && !laboratorioId.trim().isEmpty()) {
+            laboratorio = buscarLaboratorio(laboratorioId);
+            if (laboratorio == null) {
+                throw new ValidacaoException("Laboratório não encontrado para o ID: " + laboratorioId, "laboratorio");
+            }
+        }
+
+        LocalDate dataInicio = parsearDataFiltro(dataInicioStr, "dataInicio");
+        LocalDate dataFim = parsearDataFiltro(dataFimStr, "dataFim");
+        if (dataInicio != null && dataFim != null && dataFim.isBefore(dataInicio)) {
+            throw new ValidacaoException("A data final não pode ser anterior à data inicial", "dataFim");
+        }
+
+        List<Reserva> resultado = new ArrayList<>();
+        for (Reserva r : reservas) {
+            if (laboratorio != null && !r.getLaboratorio().getId().equals(laboratorio.getId())) {
+                continue;
+            }
+            if (dataInicio != null && r.getData().isBefore(dataInicio)) {
+                continue;
+            }
+            if (dataFim != null && r.getData().isAfter(dataFim)) {
+                continue;
+            }
+            resultado.add(r);
+        }
+
+        resultado.sort((a, b) -> {
+            int cmp = a.getData().compareTo(b.getData());
+            return cmp != 0 ? cmp : a.getHoraInicio().compareTo(b.getHoraInicio());
+        });
+        return resultado;
+    }
+
+    // Diferente de validarData: aceita datas no passado (histórico) e trata vazio como "sem filtro".
+    private LocalDate parsearDataFiltro(String dataStr, String campo) {
+        if (dataStr == null || dataStr.trim().isEmpty()) {
+            return null;
+        }
+        try {
+            return LocalDate.parse(dataStr.trim(), FMT_DATA);
+        } catch (DateTimeParseException e) {
+            throw new ValidacaoException("Data inválida. Use o formato dd/MM/aaaa", campo);
+        }
+    }
 }
