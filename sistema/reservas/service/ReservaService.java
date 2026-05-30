@@ -56,10 +56,36 @@ public class ReservaService {
             throw new ValidacaoException("Turma é obrigatória", "turma");
         }
 
+        // KAN-06: não aprova reserva que cause choque de horário no mesmo laboratório
+        verificarChoqueDeHorario(laboratorio, data, horaInicio, horaFim);
+
         Reserva reserva = new Reserva(String.valueOf(proximoIdReserva++), laboratorio,
                 professor.trim(), data, horaInicio, horaFim, turma.trim());
         reservas.add(reserva);
         return reserva;
+    }
+
+    // --- KAN-06: impede reservas duplicadas no mesmo laboratório/data com horários sobrepostos ---
+    private void verificarChoqueDeHorario(Laboratorio laboratorio, LocalDate data,
+                                          LocalTime horaInicio, LocalTime horaFim) {
+        for (Reserva r : reservas) {
+            boolean mesmoLaboratorio = r.getLaboratorio().getId().equals(laboratorio.getId());
+            boolean mesmaData = r.getData().equals(data);
+            if (mesmoLaboratorio && mesmaData
+                    && horariosSeSobrepoem(horaInicio, horaFim, r.getHoraInicio(), r.getHoraFim())) {
+                throw new ValidacaoException(
+                        "Conflito de horário: o laboratório já está reservado em "
+                                + r.getHoraInicio().format(FMT_HORA) + "-" + r.getHoraFim().format(FMT_HORA)
+                                + " (reserva " + r.getId() + ")", "horaInicio");
+            }
+        }
+    }
+
+    // Dois intervalos [inicioA, fimA) e [inicioB, fimB) se sobrepõem quando
+    // inicioA < fimB e inicioB < fimA. Horários "encostados" (fim de um = início de outro) não conflitam.
+    private boolean horariosSeSobrepoem(LocalTime inicioA, LocalTime fimA,
+                                        LocalTime inicioB, LocalTime fimB) {
+        return inicioA.isBefore(fimB) && inicioB.isBefore(fimA);
     }
 
     private Laboratorio validarLaboratorio(String laboratorioId) {
