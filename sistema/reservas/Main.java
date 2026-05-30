@@ -29,7 +29,8 @@ public class Main {
             System.out.println("3. Listar reservas");
             System.out.println("4. Ver confirmações registradas (KAN-04)");
             System.out.println("5. Consultar histórico de reservas (KAN-07)");
-            System.out.println("6. Trocar usuário");
+            System.out.println("6. Cancelar reserva (KAN-05)");
+            System.out.println("7. Trocar usuário");
             System.out.println("0. Sair");
             System.out.print("Escolha uma opção: ");
 
@@ -53,6 +54,9 @@ public class Main {
                     consultarHistorico(reservaService, scanner);
                     break;
                 case "6":
+                    cancelarReserva(reservaService, scanner);
+                    break;
+                case "7":
                     identificarUsuario(scanner);
                     break;
                 case "0":
@@ -186,6 +190,29 @@ public class Main {
                 System.out.println(r);
             }
             System.out.println();
+        } catch (Exception e) {
+            tratarErro(e);
+        }
+    }
+
+    // KAN-05: cancela uma reserva, liberando o ambiente
+    private static void cancelarReserva(ReservaService service, Scanner scanner) {
+        System.out.println("--- CANCELAR RESERVA (KAN-05) ---");
+        List<Reserva> reservas = service.listarReservas();
+        if (reservas.isEmpty()) {
+            System.out.println("Nenhuma reserva registrada.\n");
+            return;
+        }
+        for (Reserva r : reservas) {
+            System.out.println(r);
+        }
+        System.out.print("ID da reserva a cancelar: ");
+        String id = scanner.nextLine();
+
+        try {
+            Reserva cancelada = service.cancelarReserva(perfilAtual, nomeUsuario, id);
+            System.out.println("\nReserva cancelada! O ambiente foi liberado para o horário.");
+            System.out.println(cancelada + "\n");
         } catch (Exception e) {
             tratarErro(e);
         }
