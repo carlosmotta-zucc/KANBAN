@@ -28,7 +28,8 @@ public class Main {
             System.out.println("2. Reservar laboratório   (somente Professor)");
             System.out.println("3. Listar reservas");
             System.out.println("4. Ver confirmações registradas (KAN-04)");
-            System.out.println("5. Trocar usuário");
+            System.out.println("5. Consultar histórico de reservas (KAN-07)");
+            System.out.println("6. Trocar usuário");
             System.out.println("0. Sair");
             System.out.print("Escolha uma opção: ");
 
@@ -49,6 +50,9 @@ public class Main {
                     listarConfirmacoes(reservaService);
                     break;
                 case "5":
+                    consultarHistorico(reservaService, scanner);
+                    break;
+                case "6":
                     identificarUsuario(scanner);
                     break;
                 case "0":
@@ -152,6 +156,39 @@ public class Main {
             System.out.println(c);
         }
         System.out.println();
+    }
+
+    // KAN-07: coordenador consulta o histórico filtrando por ambiente e/ou período
+    private static void consultarHistorico(ReservaService service, Scanner scanner) {
+        System.out.println("--- HISTÓRICO DE RESERVAS (KAN-07) ---");
+        System.out.println("Deixe um filtro em branco para ignorá-lo.");
+
+        List<Laboratorio> labs = service.listarLaboratoriosAtivos();
+        for (Laboratorio l : labs) {
+            System.out.println(l);
+        }
+        System.out.print("ID do laboratório (em branco = todos): ");
+        String labId = scanner.nextLine();
+        System.out.print("Período - data inicial (dd/MM/aaaa, em branco = sem início): ");
+        String dataInicio = scanner.nextLine();
+        System.out.print("Período - data final (dd/MM/aaaa, em branco = sem fim): ");
+        String dataFim = scanner.nextLine();
+
+        try {
+            List<Reserva> resultado = service.consultarHistorico(labId, dataInicio, dataFim);
+            System.out.println();
+            if (resultado.isEmpty()) {
+                System.out.println("Nenhuma reserva encontrada para os filtros informados.\n");
+                return;
+            }
+            System.out.println(resultado.size() + " reserva(s) encontrada(s):");
+            for (Reserva r : resultado) {
+                System.out.println(r);
+            }
+            System.out.println();
+        } catch (Exception e) {
+            tratarErro(e);
+        }
     }
 
     private static void listarReservas(ReservaService service) {
