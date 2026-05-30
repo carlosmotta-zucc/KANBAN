@@ -1,3 +1,4 @@
+import model.ConfirmacaoReserva;
 import model.Laboratorio;
 import model.Perfil;
 import model.Reserva;
@@ -26,7 +27,8 @@ public class Main {
             System.out.println("1. Listar laboratórios disponíveis");
             System.out.println("2. Reservar laboratório   (somente Professor)");
             System.out.println("3. Listar reservas");
-            System.out.println("4. Trocar usuário");
+            System.out.println("4. Ver confirmações registradas (KAN-04)");
+            System.out.println("5. Trocar usuário");
             System.out.println("0. Sair");
             System.out.print("Escolha uma opção: ");
 
@@ -44,6 +46,9 @@ public class Main {
                     listarReservas(reservaService);
                     break;
                 case "4":
+                    listarConfirmacoes(reservaService);
+                    break;
+                case "5":
                     identificarUsuario(scanner);
                     break;
                 case "0":
@@ -117,12 +122,36 @@ public class Main {
         String turma = scanner.nextLine();
 
         try {
-            Reserva reserva = service.reservar(perfilAtual, nomeUsuario, labId, data, horaInicio, horaFim, turma);
-            System.out.println("\nReserva realizada com sucesso!");
-            System.out.println(reserva + "\n");
+            ConfirmacaoReserva confirmacao = service.reservar(perfilAtual, nomeUsuario, labId, data, horaInicio, horaFim, turma);
+            exibirConfirmacao(confirmacao);
         } catch (Exception e) {
             tratarErro(e);
         }
+    }
+
+    // KAN-04: confirmação clara na tela de que a solicitação foi aceita
+    private static void exibirConfirmacao(ConfirmacaoReserva confirmacao) {
+        Reserva reserva = confirmacao.getReserva();
+        System.out.println("\n=========================================");
+        System.out.println("   RESERVA CONFIRMADA (KAN-04)           ");
+        System.out.println("=========================================");
+        System.out.println("Protocolo: " + confirmacao.getProtocolo());
+        System.out.println("Status:    " + reserva.getStatus());
+        System.out.println("Reserva:   " + reserva);
+        System.out.println("Guarde o protocolo como comprovante da sua reserva.\n");
+    }
+
+    private static void listarConfirmacoes(ReservaService service) {
+        System.out.println("--- CONFIRMAÇÕES REGISTRADAS (KAN-04) ---");
+        List<ConfirmacaoReserva> confirmacoes = service.listarConfirmacoes();
+        if (confirmacoes.isEmpty()) {
+            System.out.println("Nenhuma confirmação registrada.\n");
+            return;
+        }
+        for (ConfirmacaoReserva c : confirmacoes) {
+            System.out.println(c);
+        }
+        System.out.println();
     }
 
     private static void listarReservas(ReservaService service) {
