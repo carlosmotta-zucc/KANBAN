@@ -2,6 +2,7 @@
     "java.project.sourcePaths": [
         "sistema/ambientes",
         "sistema/visualizacao",
-        "sistema/autenticacao"
+        "sistema/autenticacao",
+        "sistema/reservasFuturas"
     ]
 }
